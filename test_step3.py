@@ -7,6 +7,7 @@ import unittest
 import threading
 import time
 import random
+import sys
 from typing import List
 
 from thread_api import ThreadAPI, ThreadType, ThreadPriority, ThreadState
@@ -219,7 +220,7 @@ class TestSynchronizationPrimitives(unittest.TestCase):
         self.assertTrue(success)
         self.assertIn(cv_id, self.thread_api.condition_variables)
         
-        # Test notification
+        # Test basic notification functionality
         notified = self.thread_api.notify_condition(cv_id)
         self.assertTrue(notified)
         

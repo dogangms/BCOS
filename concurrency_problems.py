@@ -136,7 +136,7 @@ class ProducerConsumerAI:
                 self.not_empty.notify()
                 
             # Simulate production time
-            time.sleep(random.uniform(0.5, 2.0))
+            time.sleep(random.uniform(0.2, 0.8))  # Reduced production time
             
     def _consumer_worker(self, consumer_name: str):
         """Consumer thread worker"""
@@ -280,7 +280,7 @@ class DiningPhilosophersAI:
             # Think (prepare data/calculations)
             think_start = time.time()
             print(f"🤔 {node_name} is thinking (preparing consensus data)")
-            time.sleep(random.uniform(1.0, 3.0))
+            time.sleep(random.uniform(0.1, 0.5))  # Reduced thinking time
             self.thinking_time[philosopher_id] += time.time() - think_start
             
             # Try to acquire forks (blockchain data access)
@@ -304,7 +304,7 @@ class DiningPhilosophersAI:
                     # Eat (perform consensus operation)
                     eat_start = time.time()
                     print(f"🍽️ {node_name} is eating (performing consensus)")
-                    time.sleep(random.uniform(0.5, 2.0))
+                    time.sleep(random.uniform(0.2, 1.0))  # Reduced eating time
                     
                     self.eating_count[philosopher_id] += 1
                     self.eating_time[philosopher_id] += time.time() - eat_start
@@ -436,7 +436,7 @@ class ReadersWritersAI:
             
             # Read the shared model data
             print(f"📖 {reader_name} reading model v{self.shared_model_data['version']} (acc: {self.shared_model_data['accuracy']:.2f})")
-            time.sleep(random.uniform(0.2, 0.8))  # Simulate reading time
+            time.sleep(random.uniform(0.1, 0.3))  # Reduced reading time
             self.read_operations[reader_name] += 1
             
             # Reader exit protocol
@@ -448,7 +448,7 @@ class ReadersWritersAI:
             print(f"✅ {reader_name} finished reading")
             
             # Think time before next read
-            time.sleep(random.uniform(1.0, 3.0))
+            time.sleep(random.uniform(0.3, 1.0))  # Reduced think time
             
     def _writer_worker(self, writer_name: str):
         """Writer thread worker (updates AI model data)"""
@@ -467,7 +467,7 @@ class ReadersWritersAI:
                 self.shared_model_data['parameters'] += random.randint(1000, 10000)
                 
                 print(f"✏️ {writer_name} updating model v{old_version} -> v{self.shared_model_data['version']}")
-                time.sleep(random.uniform(0.5, 1.5))  # Simulate writing time
+                time.sleep(random.uniform(0.2, 0.8))  # Reduced writing time
                 self.write_operations[writer_name] += 1
                 
                 print(f"💾 {writer_name} saved model v{self.shared_model_data['version']} (acc: {self.shared_model_data['accuracy']:.3f})")
@@ -476,7 +476,7 @@ class ReadersWritersAI:
                 self.write_lock.release()
                 
             # Think time before next write
-            time.sleep(random.uniform(3.0, 6.0))
+            time.sleep(random.uniform(1.0, 2.5))  # Reduced think time
             
     def _print_statistics(self):
         """Print readers-writers statistics"""

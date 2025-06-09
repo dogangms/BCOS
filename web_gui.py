@@ -499,57 +499,223 @@ class WebGUIServer:
                     <div class="component-header">
                         <h2><i class="fas fa-folder-open"></i> File System Monitor</h2>
                         <div class="component-actions">
-                            <button class="btn-secondary">
+                            <button class="btn-secondary" id="analyze-storage">
+                                <i class="fas fa-chart-line"></i> Analyze Storage
+                            </button>
+                            <button class="btn-secondary" id="search-files">
                                 <i class="fas fa-search"></i> Search Files
+                            </button>
+                            <button class="btn-secondary" id="cleanup-disk">
+                                <i class="fas fa-broom"></i> Cleanup
                             </button>
                         </div>
                     </div>
                     
-                    <div class="scheduler-grid-full">
-                        <div class="chart-card storage-card">
+                    <!-- Storage Overview Cards -->
+                    <div class="storage-overview-grid">
+                        <div class="storage-summary-card">
                             <div class="card-header">
-                                <h3><i class="fas fa-chart-pie"></i> Storage Analytics</h3>
+                                <h3><i class="fas fa-hdd"></i> Storage Summary</h3>
+                                <div class="health-indicator excellent">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Excellent</span>
                             </div>
-                            <div class="card-content">
-                                <canvas id="storage-chart" width="300" height="300"></canvas>
-                                <div class="storage-legend">
-                                    <div class="legend-item">
-                                        <span class="color-dot used"></span>
-                                        <span>Used Space</span>
                                     </div>
-                                    <div class="legend-item">
-                                        <span class="color-dot free"></span>
-                                        <span>Free Space</span>
+                            <div class="storage-donut-container">
+                                <canvas id="storage-donut-chart" width="200" height="200"></canvas>
+                                <div class="donut-center-info">
+                                    <div class="center-value">
+                                        <span class="used-amount" id="storage-used-amount">1.2</span>
+                                        <span class="unit">TB</span>
                                     </div>
+                                    <div class="center-label">Used</div>
+                                </div>
+                            </div>
+                            <div class="storage-breakdown">
+                                <div class="breakdown-item">
+                                    <div class="breakdown-color" style="background: var(--accent-blue);"></div>
+                                    <span class="breakdown-label">System Files</span>
+                                    <span class="breakdown-value" id="system-files-size">420 GB</span>
+                                </div>
+                                <div class="breakdown-item">
+                                    <div class="breakdown-color" style="background: var(--accent-purple);"></div>
+                                    <span class="breakdown-label">AI Models</span>
+                                    <span class="breakdown-value" id="ai-models-size">680 GB</span>
+                                </div>
+                                <div class="breakdown-item">
+                                    <div class="breakdown-color" style="background: var(--accent-green);"></div>
+                                    <span class="breakdown-label">User Data</span>
+                                    <span class="breakdown-value" id="user-data-size">120 GB</span>
+                                </div>
+                                <div class="breakdown-item">
+                                    <div class="breakdown-color" style="background: var(--accent-orange);"></div>
+                                    <span class="breakdown-label">Cache</span>
+                                    <span class="breakdown-value" id="cache-size">45 GB</span>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="info-card">
+                        <div class="storage-details-card">
                             <div class="card-header">
-                                <h3><i class="fas fa-folder-tree"></i> File System Stats</h3>
+                                <h3><i class="fas fa-chart-bar"></i> Storage Details</h3>
+                                <div class="time-range-selector">
+                                    <select id="storage-timeframe">
+                                        <option value="24h">Last 24h</option>
+                                        <option value="7d" selected>Last Week</option>
+                                        <option value="30d">Last Month</option>
+                                    </select>
+                            </div>
+                            </div>
+                            <div class="storage-metrics-grid">
+                                <div class="metric-item">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                    <div class="metric-info">
+                                        <span class="metric-value" id="total-files">2,847</span>
+                                        <span class="metric-label">Total Files</span>
+                                        <span class="metric-change positive">+12 today</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="metric-item">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-folder"></i>
+                                    </div>
+                                    <div class="metric-info">
+                                        <span class="metric-value" id="total-directories">156</span>
+                                        <span class="metric-label">Directories</span>
+                                        <span class="metric-change neutral">No change</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="metric-item">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-tachometer-alt"></i>
+                                    </div>
+                                    <div class="metric-info">
+                                        <span class="metric-value" id="cache-hit-rate">94.2%</span>
+                                        <span class="metric-label">Cache Hit Rate</span>
+                                        <span class="metric-change positive">+2.1%</span>
+                                    </div>
+                                    </div>
+                                
+                                <div class="metric-item">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </div>
+                                    <div class="metric-info">
+                                        <span class="metric-value" id="io-operations">1,248/s</span>
+                                        <span class="metric-label">I/O Operations</span>
+                                        <span class="metric-change positive">+5.2%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="performance-trends-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-chart-line"></i> Performance Trends</h3>
+                                <div class="trend-indicators">
+                                    <div class="trend-item excellent">
+                                        <i class="fas fa-arrow-up"></i>
+                                        <span>Excellent</span>
+                                    </div>
+                                </div>
                             </div>
                             <div class="card-content">
-                                <div class="learning-metrics">
-                                    <div class="metric-row">
-                                        <span class="metric-label">Total Files:</span>
-                                        <span class="metric-value" id="total-files">2,847</span>
+                                <canvas id="fs-performance-chart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Analytics Section -->
+                    <div class="advanced-analytics-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-microscope"></i> Advanced Analytics</h3>
+                        </div>
+                        
+                        <div class="analytics-grid">
+                            <div class="analytics-card fragmentation-card">
+                                <div class="card-header">
+                                    <h4><i class="fas fa-puzzle-piece"></i> Disk Fragmentation</h4>
+                                    <span class="status-badge good">Good</span>
+                                </div>
+                                <div class="fragmentation-visual">
+                                    <div class="fragmentation-bar">
+                                        <div class="fragmentation-fill" id="fragmentation-fill" style="width: 15%;"></div>
                                     </div>
-                                    <div class="metric-row">
-                                        <span class="metric-label">Directories:</span>
-                                        <span class="metric-value" id="total-directories">156</span>
+                                    <div class="fragmentation-stats">
+                                        <span class="frag-value" id="fragmentation">2.1%</span>
+                                        <span class="frag-label">Fragmented</span>
                                     </div>
-                                    <div class="metric-row">
-                                        <span class="metric-label">Cache Hit Rate:</span>
-                                        <span class="metric-value" id="cache-hit-rate">94.2%</span>
+                                </div>
+                                <div class="fragmentation-recommendation">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <span>System running optimally. No defragmentation needed.</span>
+                                </div>
+                            </div>
+
+                            <div class="analytics-card access-patterns-card">
+                                <div class="card-header">
+                                    <h4><i class="fas fa-route"></i> Access Patterns</h4>
+                                </div>
+                                <div class="access-pattern-list">
+                                    <div class="pattern-item hot">
+                                        <div class="pattern-icon">🔥</div>
+                                        <div class="pattern-info">
+                                            <span class="pattern-path">/ai_models/neural_networks/</span>
+                                            <span class="pattern-frequency">1,247 accesses/h</span>
+                                        </div>
                                     </div>
-                                    <div class="metric-row">
-                                        <span class="metric-label">Fragmentation:</span>
-                                        <span class="metric-value" id="fragmentation">2.1%</span>
+                                    <div class="pattern-item warm">
+                                        <div class="pattern-icon">⚡</div>
+                                        <div class="pattern-info">
+                                            <span class="pattern-path">/blockchain/contracts/</span>
+                                            <span class="pattern-frequency">523 accesses/h</span>
+                                        </div>
                                     </div>
-                                    <div class="metric-row">
-                                        <span class="metric-label">I/O Operations:</span>
-                                        <span class="metric-value" id="io-operations">1,248/s</span>
+                                    <div class="pattern-item cool">
+                                        <div class="pattern-icon">❄️</div>
+                                        <div class="pattern-info">
+                                            <span class="pattern-path">/logs/archive/</span>
+                                            <span class="pattern-frequency">12 accesses/h</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="analytics-card health-score-card">
+                                <div class="card-header">
+                                    <h4><i class="fas fa-heartbeat"></i> System Health</h4>
+                                </div>
+                                <div class="health-score-visual">
+                                    <div class="health-ring" id="health-ring">
+                                        <canvas width="120" height="120"></canvas>
+                                        <div class="health-center">
+                                            <span class="health-score" id="health-score">95</span>
+                                            <span class="health-unit">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="health-factors">
+                                        <div class="factor">
+                                            <span class="factor-name">Speed</span>
+                                            <div class="factor-bar">
+                                                <div class="factor-fill" style="width: 92%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="factor">
+                                            <span class="factor-name">Reliability</span>
+                                            <div class="factor-bar">
+                                                <div class="factor-fill" style="width: 98%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="factor">
+                                            <span class="factor-name">Efficiency</span>
+                                            <div class="factor-bar">
+                                                <div class="factor-fill" style="width: 96%;"></div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1496,7 +1662,517 @@ body::before {
     100% { transform: translateX(100%); }
 }
 
-/* File System Grid */
+/* Enhanced File System Styles */
+.storage-overview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.storage-summary-card,
+.storage-details-card,
+.performance-trends-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+}
+
+.storage-summary-card::before,
+.storage-details-card::before,
+.performance-trends-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-primary);
+    transform: scaleX(0);
+    transition: var(--transition-smooth);
+}
+
+.storage-summary-card:hover::before,
+.storage-details-card:hover::before,
+.performance-trends-card:hover::before {
+    transform: scaleX(1);
+}
+
+.storage-summary-card:hover,
+.storage-details-card:hover,
+.performance-trends-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.health-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-xl);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.health-indicator.excellent {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--accent-green);
+    border: 1px solid var(--accent-green);
+}
+
+.storage-donut-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: var(--spacing-lg) 0;
+}
+
+.donut-center-info {
+    position: absolute;
+    text-align: center;
+}
+
+.center-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.center-value .used-amount {
+    color: var(--accent-blue);
+}
+
+.center-value .unit {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.center-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: var(--spacing-xs);
+}
+
+.storage-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.breakdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-sm);
+    transition: var(--transition-fast);
+}
+
+.breakdown-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.breakdown-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.breakdown-label {
+    flex: 1;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.breakdown-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.time-range-selector select {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+
+.storage-metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.metric-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    transition: var(--transition-fast);
+}
+
+.metric-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+}
+
+.metric-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-blue);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 1.2rem;
+}
+
+.metric-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.metric-info .metric-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.metric-info .metric-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-change {
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+}
+
+.metric-change.positive {
+    color: var(--accent-green);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.metric-change.negative {
+    color: var(--accent-red);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.metric-change.neutral {
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.trend-indicators {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.trend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-xl);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.trend-item.excellent {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--accent-green);
+    border: 1px solid var(--accent-green);
+}
+
+/* Advanced Analytics Section */
+.advanced-analytics-section {
+    margin-top: var(--spacing-xl);
+}
+
+.advanced-analytics-section .section-header {
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.advanced-analytics-section .section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.analytics-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+}
+
+.analytics-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-secondary);
+    transform: scaleX(0);
+    transition: var(--transition-smooth);
+}
+
+.analytics-card:hover::before {
+    transform: scaleX(1);
+}
+
+.analytics-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.analytics-card .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+}
+
+.analytics-card .card-header h4 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.status-badge.good {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--accent-green);
+    border: 1px solid var(--accent-green);
+}
+
+/* Fragmentation Visual */
+.fragmentation-visual {
+    margin-bottom: var(--spacing-lg);
+}
+
+.fragmentation-bar {
+    width: 100%;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: var(--spacing-md);
+}
+
+.fragmentation-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-green), var(--accent-orange), var(--accent-red));
+    border-radius: var(--radius-sm);
+    transition: var(--transition-smooth);
+}
+
+.fragmentation-stats {
+    text-align: center;
+}
+
+.frag-value {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent-green);
+    line-height: 1;
+}
+
+.frag-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.fragmentation-recommendation {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: rgba(16, 185, 129, 0.05);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--accent-green);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Access Patterns */
+.access-pattern-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.pattern-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    transition: var(--transition-fast);
+}
+
+.pattern-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.pattern-item.hot {
+    background: rgba(239, 68, 68, 0.05);
+    border-left: 3px solid var(--accent-red);
+}
+
+.pattern-item.warm {
+    background: rgba(245, 158, 11, 0.05);
+    border-left: 3px solid var(--accent-orange);
+}
+
+.pattern-item.cool {
+    background: rgba(59, 130, 246, 0.05);
+    border-left: 3px solid var(--accent-blue);
+}
+
+.pattern-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    text-align: center;
+}
+
+.pattern-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.pattern-path {
+    font-family: 'Monaco', 'Consolas', monospace;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.pattern-frequency {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+/* Health Score Visual */
+.health-score-visual {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.health-ring {
+    position: relative;
+    display: inline-block;
+}
+
+.health-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.health-score {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-green);
+    line-height: 1;
+}
+
+.health-unit {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.health-factors {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.factor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.factor-name {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.factor-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.factor-fill {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-sm);
+    transition: var(--transition-smooth);
+}
+
+/* File System Grid (Legacy) */
 .filesystem-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1530,6 +2206,31 @@ body::before {
 
 .color-dot.free {
     background: var(--accent-green);
+}
+
+/* Responsive Design for File System */
+@media (max-width: 1200px) {
+    .storage-overview-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .performance-trends-card {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .storage-overview-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .storage-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .security-status-indicator {
@@ -2466,7 +3167,124 @@ class EnhancedDashboard {
         });
         }
 
-        // Storage Chart with enhanced styling
+        // Enhanced Storage Donut Chart
+        const storageDonutCtx = document.getElementById('storage-donut-chart')?.getContext('2d');
+        if (storageDonutCtx) {
+            this.charts.storageDonut = new Chart(storageDonutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['System Files', 'AI Models', 'User Data', 'Cache'],
+                    datasets: [{
+                        data: [35, 45, 10, 10],
+                        backgroundColor: [
+                            '#00d4ff',
+                            '#8b5cf6',
+                            '#10b981',
+                            '#f59e0b'
+                        ],
+                        borderWidth: 0,
+                        cutout: '75%',
+                        spacing: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#00d4ff',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': ' + percentage + '%';
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart',
+                        animateRotate: true,
+                        animateScale: true
+                    }
+                }
+            });
+        }
+
+        // File System Performance Chart
+        const fsPerformanceCtx = document.getElementById('fs-performance-chart')?.getContext('2d');
+        if (fsPerformanceCtx) {
+            this.charts.fsPerformance = new Chart(fsPerformanceCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Read Speed (MB/s)',
+                        data: [],
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Write Speed (MB/s)',
+                        data: [],
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: { 
+                            labels: { 
+                                color: '#ffffff',
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#00d4ff',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            ticks: { color: '#b8bcc8' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        y: { 
+                            ticks: { color: '#b8bcc8' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            beginAtZero: true
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
+
+        // Storage Chart (Legacy - keep for backward compatibility)
         const storageCtx = document.getElementById('storage-chart')?.getContext('2d');
         if (storageCtx) {
         this.charts.storage = new Chart(storageCtx, {
@@ -2554,6 +3372,21 @@ class EnhancedDashboard {
         const typeFilter = document.getElementById('type-filter');
         if (statusFilter) statusFilter.addEventListener('change', () => this.applyTableFilters());
         if (typeFilter) typeFilter.addEventListener('change', () => this.applyTableFilters());
+
+        // File System action buttons
+        const analyzeStorageBtn = document.getElementById('analyze-storage');
+        const searchFilesBtn = document.getElementById('search-files');
+        const cleanupDiskBtn = document.getElementById('cleanup-disk');
+        
+        if (analyzeStorageBtn) {
+            analyzeStorageBtn.addEventListener('click', () => this.analyzeStorage());
+        }
+        if (searchFilesBtn) {
+            searchFilesBtn.addEventListener('click', () => this.searchFiles());
+        }
+        if (cleanupDiskBtn) {
+            cleanupDiskBtn.addEventListener('click', () => this.cleanupDisk());
+        }
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
@@ -3056,15 +3889,136 @@ class EnhancedDashboard {
     updateFileSystemMetrics(data) {
         if (!data || this.updatesPaused) return;
 
-        // Update storage chart with smooth transition
+        // Update enhanced storage donut chart
+        if (this.charts.storageDonut) {
+            const systemFiles = 30 + Math.random() * 10;
+            const aiModels = 40 + Math.random() * 10;
+            const userData = 8 + Math.random() * 5;
+            const cache = 3 + Math.random() * 4;
+            
+            this.charts.storageDonut.data.datasets[0].data = [systemFiles, aiModels, userData, cache];
+            this.charts.storageDonut.update('active');
+            
+            // Update storage breakdown values
+            this.smoothUpdateText('system-files-size', `${(systemFiles * 12).toFixed(0)} GB`);
+            this.smoothUpdateText('ai-models-size', `${(aiModels * 12).toFixed(0)} GB`);
+            this.smoothUpdateText('user-data-size', `${(userData * 12).toFixed(0)} GB`);
+            this.smoothUpdateText('cache-size', `${(cache * 12).toFixed(0)} GB`);
+            
+            // Update total used amount
+            const totalUsed = (systemFiles + aiModels + userData + cache) * 0.12;
+            this.smoothUpdateText('storage-used-amount', totalUsed.toFixed(1));
+        }
+
+        // Update file system performance chart
+        if (this.charts.fsPerformance) {
+            const now = new Date().toLocaleTimeString();
+            const readSpeed = 120 + Math.random() * 80;
+            const writeSpeed = 80 + Math.random() * 60;
+            
+            // Limit data points
+            if (this.charts.fsPerformance.data.labels.length > 10) {
+                this.charts.fsPerformance.data.labels.shift();
+                this.charts.fsPerformance.data.datasets.forEach(dataset => dataset.data.shift());
+            }
+            
+            this.charts.fsPerformance.data.labels.push(now);
+            this.charts.fsPerformance.data.datasets[0].data.push(readSpeed);
+            this.charts.fsPerformance.data.datasets[1].data.push(writeSpeed);
+            this.charts.fsPerformance.update('active');
+        }
+
+        // Update health score ring
+        this.drawHealthRing('health-ring', 90 + Math.random() * 8, '#10b981');
+
+        // Update fragmentation fill
+        const fragmentation = data.fragmentation || (1.5 + Math.random() * 2);
+        const fragFill = document.getElementById('fragmentation-fill');
+        if (fragFill) {
+            const fillPercentage = (fragmentation / 10) * 100; // Scale to 0-100%
+            fragFill.style.width = `${Math.min(fillPercentage, 100)}%`;
+        }
+
+        // Update access pattern frequencies with realistic data
+        this.updateAccessPatterns();
+
+        // Legacy storage chart update
         const usedPercentage = data.storage_utilization || (40 + Math.random() * 20);
         const reservedPercentage = 5;
         const freePercentage = 100 - usedPercentage - reservedPercentage;
         
         if (this.charts.storage) {
             this.charts.storage.data.datasets[0].data = [usedPercentage, freePercentage, reservedPercentage];
-            this.charts.storage.update('active'); // Use smooth animation
+            this.charts.storage.update('active');
         }
+    }
+
+    drawHealthRing(elementId, percentage, color = '#10b981') {
+        const canvas = document.querySelector(`#${elementId} canvas`);
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = 45;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Background circle
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 8;
+        ctx.stroke();
+
+        // Health arc
+        const progress = (percentage / 100) * 2 * Math.PI;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, progress);
+        
+        // Create gradient based on health score
+        let gradientColor = color;
+        if (percentage >= 90) gradientColor = '#10b981'; // Green
+        else if (percentage >= 70) gradientColor = '#f59e0b'; // Orange
+        else gradientColor = '#ef4444'; // Red
+        
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, gradientColor);
+        gradient.addColorStop(1, this.lightenColor(gradientColor, 20));
+        
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Add glow effect
+        ctx.shadowColor = gradientColor;
+        ctx.shadowBlur = 10;
+        ctx.stroke();
+        
+        // Update health score text
+        const scoreElement = document.getElementById('health-score');
+        if (scoreElement) {
+            this.animateNumber(scoreElement, parseInt(scoreElement.textContent) || 0, Math.round(percentage), 1000);
+        }
+    }
+
+    updateAccessPatterns() {
+        // Simulate realistic access pattern changes
+        const patterns = [
+            { element: null, base: 1200, variance: 200 },
+            { element: null, base: 500, variance: 100 },
+            { element: null, base: 10, variance: 5 }
+        ];
+        
+        const patternElements = document.querySelectorAll('.pattern-frequency');
+        patternElements.forEach((el, index) => {
+            if (patterns[index]) {
+                const frequency = patterns[index].base + (Math.random() - 0.5) * patterns[index].variance;
+                el.textContent = `${Math.round(frequency)} accesses/h`;
+            }
+        });
     }
 
     updateSecurityMetrics(data) {
@@ -3374,11 +4328,60 @@ class EnhancedDashboard {
                 if (tabName === 'ai-scheduler' && this.charts.performance) {
                     this.charts.performance.resize();
                 }
-                if (tabName === 'file-system' && this.charts.storage) {
-                    this.charts.storage.resize();
+                if (tabName === 'file-system') {
+                    if (this.charts.storage) this.charts.storage.resize();
+                    if (this.charts.storageDonut) this.charts.storageDonut.resize();
+                    if (this.charts.fsPerformance) this.charts.fsPerformance.resize();
                 }
             }, 100);
         }
+    }
+
+    // File System Action Methods
+    analyzeStorage() {
+        this.showLoading();
+        this.showNotification('🔍 Analyzing storage patterns...', 'info');
+        
+        // Simulate analysis process
+        setTimeout(() => {
+            this.hideLoading();
+            this.showNotification('✅ Storage analysis complete! Optimization recommendations available.', 'success', 4000);
+            
+            // Update analytics with "analyzed" data
+            this.updateFileSystemMetrics({
+                fragmentation: 1.8 + Math.random() * 1.5,
+                storage_utilization: 65 + Math.random() * 15
+            });
+        }, 2000);
+    }
+
+    searchFiles() {
+        this.showNotification('🔍 Opening advanced file search interface...', 'info');
+        
+        // In a real implementation, this would open a search modal
+        setTimeout(() => {
+            this.showNotification('📁 File search interface would open here in full implementation.', 'info', 3000);
+        }, 500);
+    }
+
+    cleanupDisk() {
+        this.showLoading();
+        this.showNotification('🧹 Starting disk cleanup...', 'info');
+        
+        // Simulate cleanup process
+        setTimeout(() => {
+            this.hideLoading();
+            const spaceFreed = (Math.random() * 2 + 0.5).toFixed(1);
+            this.showNotification(`✅ Cleanup complete! ${spaceFreed} GB of space freed.`, 'success', 4000);
+            
+            // Update storage visualization to show freed space
+            if (this.charts.storageDonut) {
+                const currentData = this.charts.storageDonut.data.datasets[0].data;
+                // Reduce cache size to simulate cleanup
+                currentData[3] = Math.max(currentData[3] - 2, 1);
+                this.charts.storageDonut.update('active');
+            }
+        }, 3000);
     }
 }
 

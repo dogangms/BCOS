@@ -301,7 +301,7 @@ class TestWebGUIServer(unittest.TestCase):
         js_content = self.gui_server._generate_javascript()
         
         # Verify JavaScript structure
-        self.assertIn("class Dashboard", js_content)
+        self.assertIn("class EnhancedDashboard", js_content)
         self.assertIn("initializeCharts", js_content)
         self.assertIn("updateAllData", js_content)
         self.assertIn("new Chart", js_content)

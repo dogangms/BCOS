@@ -922,7 +922,7 @@ We welcome contributions to BCOS! Here's how to get started:
 
 1. **Fork the Repository**
    ```bash
-   git fork https://github.com/your-username/BCOS.git
+   git fork https://github.com/dogangms/BCOS.git
    cd BCOS
    ```
 

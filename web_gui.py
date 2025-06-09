@@ -36,6 +36,7 @@ class WebGUIServer:
         self.port = port
         self.server = None
         self.running = False
+        self.process_manager = None
         
         # System data for GUI
         self.system_data = {
@@ -112,6 +113,102 @@ class WebGUIServer:
                 else:
                     self.send_error(404)
                     
+            def do_POST(self):
+                parsed_path = urlparse(self.path)
+                
+                if parsed_path.path == '/api/processes':
+                    self._create_process()
+                else:
+                    self.send_error(404)
+                    
+            def _create_process(self):
+                """Handle process creation API endpoint"""
+                try:
+                    content_length = int(self.headers.get('Content-Length', 0))
+                    post_data = self.rfile.read(content_length)
+                    process_data = json.loads(post_data.decode('utf-8'))
+                    
+                    # Import process management components
+                    try:
+                        from process_manager import ProcessManager
+                        from process_control_block import ProcessType
+                        from schedulers import MLFQScheduler
+                    except ImportError:
+                        self._send_json_response({
+                            'error': 'Process management components not available'
+                        }, 500)
+                        return
+                    
+                    # Create process using the process manager
+                    if not hasattr(gui_server, 'process_manager') or gui_server.process_manager is None:
+                        # Initialize process manager if not exists
+                        scheduler = MLFQScheduler(num_levels=3, time_quanta=[1000, 2000, 4000])
+                        gui_server.process_manager = ProcessManager(scheduler)
+                        gui_server.process_manager.start_scheduler()
+                    
+                    # Map process type string to ProcessType enum
+                    type_mapping = {
+                        'ai_inference': ProcessType.AI_INFERENCE,
+                        'blockchain_validator': ProcessType.BLOCKCHAIN_VALIDATOR,
+                        'data_processing': ProcessType.DATA_PROCESSING,
+                        'network_node': ProcessType.NETWORK_NODE,
+                        'smart_contract': ProcessType.SMART_CONTRACT,
+                        'system': ProcessType.SYSTEM,
+                        'user': ProcessType.USER
+                    }
+                    
+                    process_type = type_mapping.get(process_data.get('type'), ProcessType.USER)
+                    
+                    # Create a simple task function based on process type
+                    def create_task_function(proc_type, proc_name, args):
+                        def task_function():
+                            import time
+                            import random
+                            print(f"🚀 Starting {proc_name} ({proc_type.value})")
+                            
+                            # Simulate work based on process type
+                            work_duration = random.uniform(5, 15)
+                            for i in range(int(work_duration)):
+                                time.sleep(1)
+                                if i % 3 == 0:
+                                    print(f"⚡ {proc_name}: Progress {i+1}/{int(work_duration)}")
+                            
+                            print(f"✅ {proc_name} completed successfully")
+                            return f"{proc_name} execution result"
+                        return task_function
+                    
+                    task_func = create_task_function(process_type, process_data['name'], process_data.get('args', []))
+                    
+                    # Create the process
+                    pid = gui_server.process_manager.create_process(
+                        name=process_data['name'],
+                        process_type=process_type,
+                        target_function=task_func,
+                        args=tuple(process_data.get('args', [])),
+                        priority=process_data.get('priority', 5),
+                        memory_required=process_data.get('memory', 1024)
+                    )
+                    
+                    if pid:
+                        self._send_json_response({
+                            'success': True,
+                            'process_id': pid,
+                            'message': f'Process "{process_data["name"]}" created successfully'
+                        })
+                    else:
+                        self._send_json_response({
+                            'error': 'Failed to create process - insufficient resources'
+                        }, 400)
+                        
+                except json.JSONDecodeError:
+                    self._send_json_response({
+                        'error': 'Invalid JSON data'
+                    }, 400)
+                except Exception as e:
+                    self._send_json_response({
+                        'error': f'Internal server error: {str(e)}'
+                    }, 500)
+                    
             def _serve_dashboard(self):
                 """Serve the main dashboard HTML"""
                 html_content = gui_server._generate_dashboard_html()
@@ -161,9 +258,9 @@ class WebGUIServer:
                 self.end_headers()
                 self.wfile.write(content.encode())
                 
-            def _send_json_response(self, data):
+            def _send_json_response(self, data, status_code=200):
                 """Send JSON response"""
-                self.send_response(200)
+                self.send_response(status_code)
                 self.send_header('Content-type', 'application/json')
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
@@ -783,6 +880,54 @@ class WebGUIServer:
                                 <!-- Processes will be populated here -->
                             </tbody>
                         </table>
+                    </div>
+                </div>
+                
+                <!-- Process Creation Modal -->
+                <div id="process-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i class="fas fa-plus"></i> Create New Process</h3>
+                            <button class="modal-close" onclick="closeProcessModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="process-form">
+                                <div class="form-group">
+                                    <label for="process-name">Process Name</label>
+                                    <input type="text" id="process-name" name="name" placeholder="Enter process name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="process-type">Process Type</label>
+                                    <select id="process-type" name="type" required>
+                                        <option value="">Select process type</option>
+                                        <option value="ai_inference">🧠 AI Inference</option>
+                                        <option value="blockchain_validator">⛓️ Blockchain Validator</option>
+                                        <option value="data_processing">📊 Data Processing</option>
+                                        <option value="network_node">🌐 Network Node</option>
+                                        <option value="smart_contract">📜 Smart Contract</option>
+                                        <option value="system">⚙️ System Task</option>
+                                        <option value="user">👤 User Process</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="process-priority">Priority (0-10)</label>
+                                    <input type="range" id="process-priority" name="priority" min="0" max="10" value="5">
+                                    <span id="priority-value">5</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="process-memory">Memory Required (MB)</label>
+                                    <input type="number" id="process-memory" name="memory" min="64" max="8192" value="1024" step="64">
+                                </div>
+                                <div class="form-group">
+                                    <label for="process-args">Arguments (optional)</label>
+                                    <textarea id="process-args" name="args" placeholder="Enter process arguments, one per line"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn-secondary" onclick="closeProcessModal()">Cancel</button>
+                            <button type="button" class="btn-primary" onclick="createProcess()">Create Process</button>
+                        </div>
                     </div>
                 </div>
 
@@ -3031,6 +3176,198 @@ select:focus {
     gap: var(--spacing-md);
 }
 
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius);
+    transition: var(--transition-smooth);
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: var(--spacing-lg);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+}
+
+.form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-group label {
+    display: block;
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-bottom: var(--spacing-xs);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: var(--transition-smooth);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+.form-group textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.form-group input[type="range"] {
+    margin-bottom: var(--spacing-xs);
+}
+
+#priority-value {
+    display: inline-block;
+    background: var(--accent-blue);
+    color: white;
+    padding: 2px 8px;
+    border-radius: var(--border-radius);
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-left: var(--spacing-sm);
+}
+
+/* Process Table Styles */
+.process-type {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.priority-badge {
+    padding: 2px 8px;
+    border-radius: var(--border-radius);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.priority-high {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid #ef4444;
+}
+
+.priority-medium {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid #f59e0b;
+}
+
+.priority-low {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid #10b981;
+}
+
+.status {
+    padding: 4px 8px;
+    border-radius: var(--border-radius);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-running {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid #10b981;
+}
+
+.status-queued {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid #f59e0b;
+}
+
+.power-mode {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: capitalize;
+}
+
 /* Responsive Design - Updated for tab layout */
 @media (max-width: 768px) {
     .tab-container {
@@ -3043,6 +3380,19 @@ select:focus {
     
     .tab-btn {
         padding: var(--spacing-md);
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: var(--spacing-lg);
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+    
+    .modal-footer button {
+        width: 100%;
     }
 }'''
 
@@ -3067,6 +3417,7 @@ class EnhancedDashboard {
         this.bindEventListeners();
         this.startDataUpdates();
         this.showWelcomeNotification();
+        this.updateProcessTable();
     }
 
     initializeComponents() {
@@ -3717,6 +4068,158 @@ class EnhancedDashboard {
         document.head.appendChild(style);
     }
 
+    // Process creation functionality
+    showProcessModal() {
+        const modal = document.getElementById('process-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            // Reset form
+            document.getElementById('process-form').reset();
+            document.getElementById('priority-value').textContent = '5';
+        }
+    }
+
+    async createProcess() {
+        const form = document.getElementById('process-form');
+        const formData = new FormData(form);
+        
+        const processData = {
+            name: formData.get('name'),
+            type: formData.get('type'),
+            priority: parseInt(formData.get('priority')),
+            memory: parseInt(formData.get('memory')),
+            args: formData.get('args').split('\\n').filter(arg => arg.trim())
+        };
+
+        if (!processData.name || !processData.type) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+
+        try {
+            this.showLoading();
+            const response = await fetch('/api/processes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(processData)
+            });
+
+            const result = await response.json();
+            
+            if (response.ok) {
+                this.hideLoading();
+                this.closeProcessModal();
+                this.showNotification(`✅ Process "${processData.name}" created successfully!`, 'success');
+                // Refresh process list
+                this.updateProcessTable();
+            } else {
+                throw new Error(result.error || 'Failed to create process');
+            }
+        } catch (error) {
+            this.hideLoading();
+            this.showNotification(`❌ Failed to create process: ${error.message}`, 'error');
+        }
+    }
+
+    closeProcessModal() {
+        const modal = document.getElementById('process-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    async updateProcessTable() {
+        try {
+            const data = await this.fetchSchedulerData();
+            if (data && data.running_processes) {
+                const tbody = document.getElementById('process-table-body');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    
+                    const processes = data.running_processes;
+                    if (Object.keys(processes).length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #888;">No active processes</td></tr>';
+                    } else {
+                        Object.entries(processes).forEach(([coreId, process]) => {
+                            const row = document.createElement('tr');
+                            const runtime = this.formatRuntime(process.actual_runtime || 0);
+                            const statusClass = process.status === 'running' ? 'status-running' : 'status-queued';
+                            
+                            row.innerHTML = `
+                                <td><input type="checkbox" data-process-id="${process.id}"></td>
+                                <td>${process.id}</td>
+                                <td><span class="process-type">${this.getProcessTypeIcon(process.type)} ${process.type}</span></td>
+                                <td>Core ${coreId}</td>
+                                <td><span class="priority-badge priority-${this.getPriorityClass(process.priority)}">${process.priority}</span></td>
+                                <td><span class="power-mode">${process.power_state || 'balanced'}</span></td>
+                                <td>${runtime}</td>
+                                <td><span class="status ${statusClass}">Running</span></td>
+                                <td>
+                                    <button class="btn-icon" onclick="dashboard.pauseProcess('${process.id}')" title="Pause">
+                                        <i class="fas fa-pause"></i>
+                                    </button>
+                                    <button class="btn-icon" onclick="dashboard.terminateProcess('${process.id}')" title="Terminate">
+                                        <i class="fas fa-stop"></i>
+                                    </button>
+                                </td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Failed to update process table:', error);
+        }
+    }
+
+    getProcessTypeIcon(type) {
+        const icons = {
+            'ai_inference': '🧠',
+            'blockchain_validator': '⛓️',
+            'data_processing': '📊',
+            'network_node': '🌐',
+            'smart_contract': '📜',
+            'system': '⚙️',
+            'user': '👤'
+        };
+        return icons[type] || '💻';
+    }
+
+    getPriorityClass(priority) {
+        if (priority >= 8) return 'high';
+        if (priority >= 5) return 'medium';
+        return 'low';
+    }
+
+    formatRuntime(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+        
+        if (hours > 0) {
+            return `${hours}h ${minutes}m ${secs}s`;
+        } else if (minutes > 0) {
+            return `${minutes}m ${secs}s`;
+        } else {
+            return `${secs}s`;
+        }
+    }
+
+    async pauseProcess(processId) {
+        this.showNotification(`Pausing process ${processId}...`, 'info');
+        // Implementation would depend on your process manager
+    }
+
+    async terminateProcess(processId) {
+        if (confirm(`Are you sure you want to terminate process ${processId}?`)) {
+            this.showNotification(`Terminating process ${processId}...`, 'info');
+            // Implementation would depend on your process manager
+        }
+    }
+
     async fetchSystemData() {
         try {
             const response = await fetch('/api/system');
@@ -3854,6 +4357,9 @@ class EnhancedDashboard {
         this.smoothUpdateText('adaptations', data.adaptation_count || 1247);
         this.smoothUpdateText('total-scheduled', data.total_scheduled || 342);
         this.smoothUpdateText('queue-length', data.queue_length || 12);
+        
+        // Update process table
+        this.updateProcessTable();
 
         // Update performance chart with smooth animation
         const now = new Date().toLocaleTimeString();
@@ -4388,7 +4894,34 @@ class EnhancedDashboard {
 // Initialize dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.dashboard = new EnhancedDashboard();
+    
+    // Add event listener for New Process button
+    const newProcessBtn = document.querySelector('.btn-secondary');
+    if (newProcessBtn && newProcessBtn.textContent.includes('New Process')) {
+        newProcessBtn.onclick = () => window.dashboard.showProcessModal();
+    }
+    
+    // Add event listener for priority slider
+    const prioritySlider = document.getElementById('process-priority');
+    if (prioritySlider) {
+        prioritySlider.addEventListener('input', (e) => {
+            document.getElementById('priority-value').textContent = e.target.value;
+        });
+    }
 });
+
+// Global functions for modal
+function closeProcessModal() {
+    if (window.dashboard) {
+        window.dashboard.closeProcessModal();
+    }
+}
+
+function createProcess() {
+    if (window.dashboard) {
+        window.dashboard.createProcess();
+    }
+}
 
 // Handle page visibility change to pause updates when tab is not active
 document.addEventListener('visibilitychange', () => {
